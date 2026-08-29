@@ -3,7 +3,7 @@ namespace Mercury.Ledger.Entities;
 public class JournalEntry
 {
     public Guid Id { get; init; } = Guid.NewGuid();
-    public string Reference { get; init; }
+    public required string Reference { get; init; }
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;
     public string? Description { get; init; }
     public PaymentChannel Channel { get; init; }
@@ -19,7 +19,7 @@ public class JournalEntry
         string? description = null)
     {
         if (lines.Count < 2) throw new ArgumentException("A journal entry needs at least 2 lines");
-
+        
         var debits = lines.Where(l => l.Direction == EntryDirection.Debit).Sum(l => l.Amount);
         var credits = lines.Where(l => l.Direction == EntryDirection.Credit).Sum(l => l.Amount);
 

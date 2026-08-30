@@ -3,11 +3,20 @@ namespace Mercury.Ledger.Entities;
 public enum PaymentChannel
 {
     Cash,
-    Transfer,
+    BankTransfer,
     PosCard
 }
 
 public enum EntryDirection {
     Debit,
     Credit
+}
+
+public enum AccountType
+{
+    Asset,
+    Liability,
+    Equity,
+    Revenue,
+    Expense
 }

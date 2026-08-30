@@ -17,15 +17,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options): DbContext(opt
             entity.HasIndex(a => a.Code).IsUnique();
             entity.Property(a => a.Code).HasMaxLength(64).IsRequired();
             entity.Property(a => a.Name).HasMaxLength(128).IsRequired();
-            entity.Property(a => a.Type).HasMaxLength(32).IsRequired();
+            entity.Property(a => a.Type).HasConversion<string>().HasMaxLength(16).IsRequired();
             
             
             entity.HasData(
-                new Account { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Code = "STORE-A-PENDING", Name = "Store A – Pending Settlement", Type = "Asset" },
-                new Account { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Code = "STORE-A-CASH-TILL", Name = "Store A – Cash Till", Type = "Asset" },
-                new Account { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Code = "PHARMACY-BANK", Name = "Pharmacy Bank Account", Type = "Asset" },
-                new Account { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Code = "SALES-REVENUE-A", Name = "Sales Revenue – Store A", Type = "Revenue" },
-                new Account { Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Code = "REFUNDS-A", Name = "Refunds – Store A", Type = "Revenue" }
+                new Account { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Code = "STORE-A-PENDING", Name = "Store A – Pending Settlement", Type = AccountType.Asset },
+                new Account { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Code = "STORE-A-CASH-TILL", Name = "Store A – Cash Till", Type = AccountType.Asset },
+                new Account { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Code = "PHARMACY-BANK", Name = "Pharmacy Bank Account", Type = AccountType.Asset },
+                new Account { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Code = "SALES-REVENUE-A", Name = "Sales Revenue – Store A", Type = AccountType.Revenue },
+                new Account { Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Code = "REFUNDS-A", Name = "Refunds – Store A", Type = AccountType.Revenue }
             );
             
         });

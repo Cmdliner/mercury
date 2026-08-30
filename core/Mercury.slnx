@@ -2,4 +2,5 @@
   <Project Path="Mercury.Api/Mercury.Api.csproj" />
   <Project Path="Mercury.Ledger/Mercury.Ledger.csproj" />
   <Project Path="Mercury.Merchants/Mercury.Merchants.csproj" />
+  <Project Path="Mercury.Tests/Mercury.Tests.csproj" />
 </Solution>

@@ -1,4 +1,5 @@
 using Mercury.Ledger.Entities;
+using Mercury.Merchants.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mercury.Api.Data;
@@ -8,6 +9,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options): DbContext(opt
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
     public DbSet<JournalLine> JournalLines => Set<JournalLine>();
+    
+    public DbSet<Merchant> Merchants => Set<Merchant>();
+    public DbSet<Store> Stores => Set<Store>();
+    public DbSet<Staff> Staffs => Set<Staff>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,5 +66,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options): DbContext(opt
                 .HasForeignKey(l => l.AccountId)
                 .OnDelete(DeleteBehavior.Restrict);       // edge case #5
         });
+        
+        
+       // Merchant 
+       modelBuilder.Entity<Merchant>(entity =>
+       {
+           entity.HasKey(m => m.Id);
+           entity.Property(m => m.Name).HasMaxLength(128).IsRequired();
+       });
+
+       modelBuilder.Entity<Store>(entity =>
+       {
+           entity.HasKey(s => s.Id);
+           entity.Property(s => s.Name).HasMaxLength(128).IsRequired();
+           entity.Property(s => s.Location).HasMaxLength(128).IsRequired();
+           entity.HasOne<Merchant>().WithMany(m => m.Stores).HasForeignKey(s => s.MerchantId);
+       });
+       
+       modelBuilder.Entity<Staff>(entity =>
+       {
+           entity.HasKey(s => s.Id);
+           entity.Property(s => s.Name).HasMaxLength(128).IsRequired();
+           entity.Property(s => s.Role).HasConversion<string>().HasMaxLength(32);
+           entity.HasOne<Merchant>().WithMany(m => m.Staffs).HasForeignKey(s => s.MerchantId);
+           entity.HasOne<Store>().WithMany(s => s.Staffs).HasForeignKey(s => s.StoreId).IsRequired(false);
+       });
     }
 }

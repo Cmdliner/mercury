@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Mercury.Api\Mercury.Api.csproj" />
     <ProjectReference Include="..\Mercury.Merchants\Mercury.Merchants.csproj" />
     <ProjectReference Include="..\Mercury.Ledger\Mercury.Ledger.csproj" />
   </ItemGroup>

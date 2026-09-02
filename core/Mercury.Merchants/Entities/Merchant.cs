@@ -7,7 +7,7 @@ public class Merchant
     
     public ICollection<Store> Stores { get; set; } = [];
 
-    public ICollection<Staff> Staffs { get; set; } = [];
+    public ICollection<Staff> StaffMembers { get; set; } = [];
 }
 
 // N.B => THE MERCHANT IS THE BUSINESS ENTITY ITSELF. E.G NEURA-AID PHARMACEUTICALS

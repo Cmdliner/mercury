@@ -8,6 +8,6 @@ public class Store
     public required string Location { get;  set; }
 
 
-    public ICollection<Staff> Staffs { get; private set; } = [];
+    public ICollection<Staff> StaffMembers { get; private set; } = [];
 
 }

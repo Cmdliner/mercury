@@ -1,6 +1,7 @@
 using Mercury.Api.Data;
 using Mercury.Merchants.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Mercury.Api.Services;
 
@@ -43,7 +44,7 @@ public class AuthService(UserManager<IdentityUser<Guid>> userManager, AppDbConte
         var passwordValid = await userManager.CheckPasswordAsync(identityUser, password);
         if (!passwordValid) return (false, null, "Invalid credentials");
 
-        var staff = await db.StaffMembers.FindAsync(identityUser.Id);
+        var staff = await db.StaffMembers.FirstOrDefaultAsync( s => s.IdentityUserId == identityUser.Id);
         if (staff is null) return (false, null, "Invalid credentials");
         
         var token= tokenService.GenerateToken(identityUser, staff);

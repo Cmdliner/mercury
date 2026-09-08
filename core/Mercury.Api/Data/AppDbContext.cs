@@ -1,5 +1,6 @@
 using Mercury.Ledger.Entities;
 using Mercury.Merchants.Entities;
+using Mercury.Payments.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Merchant> Merchants => Set<Merchant>();
     public DbSet<Store> Stores => Set<Store>();
     public DbSet<Staff> StaffMembers => Set<Staff>();
+
+    public DbSet<PaymentRequest> PaymentRequests => Set<PaymentRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -112,11 +115,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(s => s.Role).HasConversion<string>().HasMaxLength(32);
             entity.HasOne<Merchant>().WithMany(m => m.StaffMembers).HasForeignKey(s => s.MerchantId);
             entity.HasOne<Store>().WithMany(s => s.StaffMembers).HasForeignKey(s => s.StoreId).IsRequired(false);
-            
+
             entity.HasOne<IdentityUser<Guid>>()
                 .WithMany()
                 .HasForeignKey((s => s.IdentityUserId))
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Payments 
+        modelBuilder.Entity<PaymentRequest>(entity =>
+        {
+            entity.HasKey(pr => pr.Id);
+            entity.Property(pr => pr.Provider).HasConversion<string>().IsRequired();
+            entity.Property(pr => pr.Status).HasConversion<string>();
+            entity.HasOne<Merchant>().WithMany().HasForeignKey(pr => pr.MerchantId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Store>().WithMany().HasForeignKey(pr => pr.StoreId);
+            entity.Property(l => l.Amount).HasPrecision(18, 2);
+            entity.Property(pr => pr.ProviderReference).HasMaxLength(128).IsRequired();
         });
     }
 }

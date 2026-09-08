@@ -1,6 +1,7 @@
 using System.Text;
 using Mercury.Api.Data;
 using Mercury.Api.Services;
+using Mercury.Payments;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,9 @@ builder.Services.AddControllers();
 // builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<IPaymentCollector, PaystackCollector>();
+builder.Services.AddScoped<IPaymentCollector, NombaCollector>();
+builder.Services.AddScoped<PaymentCollectorFactory>();
 
 var app = builder.Build();
 

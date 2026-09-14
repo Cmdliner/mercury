@@ -5,6 +5,7 @@ using Mercury.Payments;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,21 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options => options
     .UseNpgsql(builder.Configuration.GetConnectionString("Mercury"))
     .UseSnakeCaseNamingConvention());
+
+builder.Services.Configure<PaystackOptions>(builder.Configuration.GetSection("Paystack"));
+builder.Services.Configure<NombaOptions>(builder.Configuration.GetSection("Nomba"));
+builder.Services.AddHttpClient<PaystackCollector>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<PaystackOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers
+        .AuthenticationHeaderValue("Bearer", options.SecretKey);
+});
+builder.Services.AddHttpClient("Nomba", (sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<NombaOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+});
 
 builder.Services.AddIdentityCore<IdentityUser<Guid>>(options =>
     {
@@ -47,7 +63,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 // builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddSingleton<INombaTokenProvider, NombaTokenProvider>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<IPaymentCollector, PaystackCollector>();
 builder.Services.AddScoped<IPaymentCollector, NombaCollector>();

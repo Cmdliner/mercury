@@ -6,9 +6,9 @@ namespace Mercury.Payments;
 public interface IPaymentCollector
 {
     PaymentProvider Provider { get; }
-    Task<PaymentInitiationResult> InitiateAsync();
-    bool VerifyRawWebhookSignature(string rawPayload, IDictionary headers);
-    PaymentWebhookEvent ParseWehookPayload(string rawPayload);
+    Task<PaymentInitiationResult> InitiateAsync(decimal amount, string reference, CancellationToken ct);
+    bool VerifyWebhookSignature(string rawPayload, IReadOnlyDictionary<string, string> headers);
+    PaymentWebhookEvent ParseWebhookPayload(string rawPayload);
 }
 
 

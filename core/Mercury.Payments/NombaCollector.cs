@@ -3,22 +3,27 @@ using Mercury.Payments.Entities;
 
 namespace Mercury.Payments;
 
-public class NombaCollector: IPaymentCollector
+public class NombaCollector(IHttpClientFactory httpClientFactory, INombaTokenProvider tokenProvider): IPaymentCollector
 {
     public PaymentProvider Provider { get; } = PaymentProvider.Nomba;
     
-    public async Task<PaymentInitiationResult> InitiateAsync()
+
+    public async Task<PaymentInitiationResult> InitiateAsync(decimal amount, string reference, CancellationToken ct)
     {
-        await Task.Delay(0);
+        var client = httpClientFactory.CreateClient("Nomba");
+        var token = await tokenProvider.GetAccessTokenAsync(ct);
+        
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        // await client.PostAsync();
         throw new NotImplementedException();
     }
 
-    public bool VerifyRawWebhookSignature(string rawPayload, IDictionary headers)
+    public bool VerifyWebhookSignature(string rawPayload, IReadOnlyDictionary<string, string> headers)
     {
         throw new NotImplementedException();
     }
 
-    public PaymentWebhookEvent ParseWehookPayload(string rawPayload)
+    public PaymentWebhookEvent ParseWebhookPayload(string rawPayload)
     {
         throw new NotImplementedException();
     }

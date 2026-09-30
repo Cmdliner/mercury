@@ -1,4 +1,5 @@
 using System.Text;
+using Mercury.Api;
 using Mercury.Api.Data;
 using Mercury.Api.Services;
 using Mercury.Payments;
@@ -12,13 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<AppDbContext>(options => options
     .UseNpgsql(builder.Configuration.GetConnectionString("Mercury"))
     .UseSnakeCaseNamingConvention());
 
 builder.Services.Configure<PaystackOptions>(builder.Configuration.GetSection("Paystack"));
 builder.Services.Configure<NombaOptions>(builder.Configuration.GetSection("Nomba"));
-builder.Services.AddHttpClient<PaystackCollector>((sp, client) =>
+builder.Services.AddHttpClient<IPaymentCollector, PaystackCollector>((sp, client) =>
 {
     var options = sp.GetRequiredService<IOptions<PaystackOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
@@ -49,28 +52,48 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        ValidateAudience = true, ValidateIssuerSigningKey = true,
+        ValidateAudience = true, 
+        ValidateIssuerSigningKey = true,
         ValidateLifetime = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey)),
+        RoleClaimType = "role"
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"Jwt Auth Failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        }
     };
 });
 
-builder.Services.AddAuthorization();
-builder.Services.AddControllers();
+builder.Services.AddAuthorization(options =>
+{
+    options.InvokeHandlersAfterFailure = true;
+});
+builder.Services.AddControllers()
+    .AddJsonOptions( option => 
+    {
+        option.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 // builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSingleton<INombaTokenProvider, NombaTokenProvider>();
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddScoped<IPaymentCollector, PaystackCollector>();
 builder.Services.AddScoped<IPaymentCollector, NombaCollector>();
 builder.Services.AddScoped<PaymentCollectorFactory>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

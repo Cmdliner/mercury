@@ -16,25 +16,32 @@ public class PaystackCollector(HttpClient httpClient, IOptions<PaystackOptions> 
     
     public async Task<PaymentInitiationResult> InitiateAsync(decimal amount, string reference, CancellationToken ct)
     {
+        IEnumerable<string> paymentChannels = ["card", "bank_transfer"];
         var payload = new
         {
-            email = $"sale-{reference}@mercury.internal",
+            email = $"sale-{reference}+research@adeyemiabiade.me",
             amount = (int)(amount * 100), // amount in kobo
+            channels = paymentChannels,
             reference,
-            bank_transfer = new { account_expires_at = DateTime.UtcNow.AddMinutes(30).ToString("o") }
+            // bank_transfer = new { account_expires_at = DateTime.UtcNow.AddMinutes(30).ToString("o") }
         };
 
-        var response = await httpClient.PostAsJsonAsync("charge", payload, ct);
-        response.EnsureSuccessStatusCode();
+        var response = await httpClient.PostAsJsonAsync("transaction/initialize", payload, ct);
+        var responseBody = await response.Content.ReadAsStringAsync(ct);
 
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
-        var data = body.GetProperty("data"); 
-        var paystackReference = body.GetProperty("reference").GetString()!;
-        
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new PaymentProviderException("Paystack", (int)response.StatusCode, ExtractMessage(responseBody));
+        }
+
+        var body = JsonSerializer.Deserialize<JsonElement>(responseBody);
+        var data = body.GetProperty("data");
+        var paystackReference = data.GetProperty("reference").GetString() ?? string.Empty;
+
         // Use this as a placeholder for now till you get the actual response shape from paystack
         // You should probably log the data response to the console
         var instructions = data.ToString();
-        
+
         return new PaymentInitiationResult(paystackReference, instructions);
     }
 
@@ -44,7 +51,7 @@ public class PaystackCollector(HttpClient httpClient, IOptions<PaystackOptions> 
         if(string.IsNullOrEmpty(signature))  return false;
         
         var secret = _options.SecretKey;
-        var computedHash = HMACSHA512.HashData(Encoding.UTF8.GetBytes(signature), Encoding.UTF8.GetBytes(rawPayload));
+        var computedHash = HMACSHA512.HashData(Encoding.UTF8.GetBytes(secret), Encoding.UTF8.GetBytes(rawPayload));
         var computedSignature = Convert.ToHexString(computedHash).ToLowerInvariant();
         
         // Constant-time comparison:
@@ -67,6 +74,22 @@ public class PaystackCollector(HttpClient httpClient, IOptions<PaystackOptions> 
         return new PaymentWebhookEvent(
             ProviderReference: data.GetProperty("reference").GetString()!,
             Amount: data.GetProperty("amount").GetInt32() / 100M,
-            Sucessful: eventType == "charge.success");
+            Successful: eventType == "charge.success");
+    }
+
+    private static string ExtractMessage(string responseBody)
+    {
+        try
+        {
+            var doc = JsonSerializer.Deserialize<JsonElement>(responseBody);
+            if (doc.ValueKind == JsonValueKind.Object && doc.TryGetProperty("message", out var message))
+                return message.GetString() ?? responseBody;
+        }
+        catch (JsonException)
+        {
+            // Paystack didn't return JSON - fall through and surface the raw body.
+        }
+
+        return responseBody;
     }
 }

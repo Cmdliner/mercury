@@ -126,12 +126,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.Entity<PaymentRequest>(entity =>
         {
             entity.HasKey(pr => pr.Id);
+            entity.HasIndex(pr => pr.IdempotencyKey).IsUnique();
             entity.Property(pr => pr.Provider).HasConversion<string>().IsRequired();
             entity.Property(pr => pr.Status).HasConversion<string>();
             entity.HasOne<Merchant>().WithMany().HasForeignKey(pr => pr.MerchantId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Store>().WithMany().HasForeignKey(pr => pr.StoreId);
-            entity.Property(l => l.Amount).HasPrecision(18, 2);
-            entity.Property(pr => pr.ProviderReference).HasMaxLength(128).IsRequired();
+            entity.Property(pr => pr.Amount).HasPrecision(18, 2);
+            entity.Property(pr => pr.ProviderReference).HasMaxLength(128);
         });
     }
 }

@@ -7,7 +7,7 @@ namespace Mercury.Api.Services;
 
 public class AuthService(UserManager<IdentityUser<Guid>> userManager, AppDbContext db, TokenService tokenService)
 {
-    public async Task<(bool Success, string? token, IEnumerable<string> Errors)> RegisterAsync(
+    public async Task<(bool Success, string? token, IEnumerable<string> Errors)> RegisterMerchantAsync(
         string email,
         string password,
         string merchantName,
@@ -33,6 +33,26 @@ public class AuthService(UserManager<IdentityUser<Guid>> userManager, AppDbConte
         await db.SaveChangesAsync();
 
         var token = tokenService.GenerateToken(identityUser, owner);
+        return (true, token, []);
+    }
+
+    public async Task<(bool Success, string? token, IEnumerable<string> Errors)> RegisterStaffAsync(Guid merchantId, Guid storeId, StaffRole role, string email, string name, string password)
+    {
+        var identityUser = new IdentityUser<Guid> { UserName = email, Email = email };
+        var createResult = await userManager.CreateAsync(identityUser, password);
+
+        if (!createResult.Succeeded) return (false, null,  createResult.Errors.Select(e => e.Description));
+
+        var staff = Staff.Create(
+            name: name,
+            role: role,
+            merchantId: merchantId,
+            identityUserId: identityUser.Id,
+            storeId: storeId);
+        db.StaffMembers.Add(staff);
+        await db.SaveChangesAsync();
+        
+        var token = tokenService.GenerateToken(identityUser, staff);
         return (true, token, []);
     }
 

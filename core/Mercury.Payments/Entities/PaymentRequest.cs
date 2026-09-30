@@ -9,6 +9,7 @@ public class PaymentRequest
     public Guid MerchantId { get; init; }
     public Guid StoreId { get; init; }
     public decimal Amount { get; init; }
+    public Guid IdempotencyKey { get; init; } 
     public PaymentProvider Provider { get; init; }
     public PaymentStatus Status { get; private set; } = PaymentStatus.Pending;
     public string? ProviderReference { get; set; }

@@ -13,4 +13,4 @@ public interface IPaymentCollector
 
 
 public record PaymentInitiationResult(string ProviderReference, string PaymentInstructions);
-public record PaymentWebhookEvent(string ProviderReference, decimal Amount, bool Sucessful);
+public record PaymentWebhookEvent(string ProviderReference, decimal Amount, bool Successful);
